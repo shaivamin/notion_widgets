@@ -27,14 +27,23 @@ const sequelize = new Sequelize(
   }
 );
 
-// Import models
-const User = require('./User');
-const Child = require('./Child');
-const School = require('./School');
-const Event = require('./Event');
-const NotificationSettings = require('./NotificationSettings');
-const EventCategory = require('./EventCategory');
-const UserEvent = require('./UserEvent');
+// Import model definitions
+const defineUser = require('./User');
+const defineChild = require('./Child');
+const defineSchool = require('./School');
+const defineEvent = require('./Event');
+const defineNotificationSettings = require('./NotificationSettings');
+const defineEventCategory = require('./EventCategory');
+const defineUserEvent = require('./UserEvent');
+
+// Initialize models with sequelize instance
+const User = defineUser(sequelize);
+const Child = defineChild(sequelize);
+const School = defineSchool(sequelize);
+const Event = defineEvent(sequelize);
+const NotificationSettings = defineNotificationSettings(sequelize);
+const EventCategory = defineEventCategory(sequelize);
+const UserEvent = defineUserEvent(sequelize);
 
 // Define associations
 // User ↔ Child (1:N) — parents manage multiple children
@@ -74,6 +83,10 @@ Event.belongsToMany(User, {
   otherKey: 'user_id',
   as: 'subscribers'
 });
+
+// Event ↔ User (N:1) — events are created by users
+Event.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+User.hasMany(Event, { foreignKey: 'created_by', as: 'createdEvents' });
 
 module.exports = {
   sequelize,

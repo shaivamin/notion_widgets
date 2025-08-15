@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('./index');
+module.exports = (sequelize) => {
 
 const NotificationSettings = sequelize.define('NotificationSettings', {
   id: {
