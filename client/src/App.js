@@ -11,12 +11,9 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
-import EventsPage from './pages/EventsPage';
-import EventDetailPage from './pages/EventDetailPage';
 import CalendarPage from './pages/CalendarPage';
-import ProfilePage from './pages/ProfilePage';
+import EventDetailPage from './pages/EventDetailPage';
 import ChildrenPage from './pages/ChildrenPage';
-import SchoolsPage from './pages/SchoolsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminPage from './pages/AdminPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -58,27 +55,33 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={
-          user ? <Navigate to="/dashboard" replace /> : <HomePage />
+          user ? <Navigate to="/home" replace /> : <HomePage />
         } />
         <Route path="/login" element={
-          user ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          user ? <Navigate to="/home" replace /> : <LoginPage />
         } />
         <Route path="/register" element={
-          user ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+          user ? <Navigate to="/home" replace /> : <RegisterPage />
         } />
 
-        {/* Protected routes */}
+        {/* Protected routes - Updated to match site map */}
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="events" element={<EventsPage />} />
-          <Route path="events/:id" element={<EventDetailPage />} />
+          {/* Home - Quick list of next events */}
+          <Route path="home" element={<DashboardPage />} />
+          
+          {/* Calendar - Month/week view for planning ahead */}
           <Route path="calendar" element={<CalendarPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+          
+          {/* Event Details - Full info + "Add to My Calendar" button */}
+          <Route path="events/:id" element={<EventDetailPage />} />
+          
+          {/* My Children - Manage profiles & school links */}
           <Route path="children" element={<ChildrenPage />} />
-          <Route path="schools" element={<SchoolsPage />} />
+          
+          {/* Notifications Settings - Adjust reminder preferences */}
           <Route path="notifications" element={<NotificationsPage />} />
           
-          {/* Admin routes */}
+          {/* Admin Dashboard - Create, edit, and delete events */}
           <Route path="admin" element={
             <ProtectedRoute requiredRole={['admin', 'school_admin']}>
               <AdminPage />

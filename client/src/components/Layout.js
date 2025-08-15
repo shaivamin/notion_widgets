@@ -9,8 +9,6 @@ import {
   Menu, 
   X,
   Home,
-  School,
-  User,
   BarChart3
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,19 +19,22 @@ const Layout = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Updated navigation to match site map
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Events', href: '/events', icon: Calendar },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
-    { name: 'Children', href: '/children', icon: Users },
-    { name: 'Schools', href: '/schools', icon: School },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
-    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Home', href: '/home', icon: Home, description: 'Quick list of next events' },
+    { name: 'Calendar', href: '/calendar', icon: Calendar, description: 'Month/week view for planning' },
+    { name: 'My Children', href: '/children', icon: Users, description: 'Manage profiles & school links' },
+    { name: 'Notifications', href: '/notifications', icon: Bell, description: 'Adjust reminder preferences' },
   ];
 
   // Add admin navigation if user has admin role
   if (user?.role === 'admin' || user?.role === 'school_admin') {
-    navigation.push({ name: 'Admin', href: '/admin', icon: BarChart3 });
+    navigation.push({ 
+      name: 'Admin Dashboard', 
+      href: '/admin', 
+      icon: BarChart3, 
+      description: 'Create, edit, and delete events' 
+    });
   }
 
   const handleLogout = () => {
@@ -87,7 +88,7 @@ const Layout = () => {
                 {user?.firstName} {user?.lastName}
               </div>
               <div className="text-xs text-gray-500 capitalize">
-                {user?.role}
+                {user?.role === 'school_admin' ? 'School Admin' : user?.role}
               </div>
             </div>
           </div>
@@ -101,15 +102,21 @@ const Layout = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`group flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive(item.href)
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 onClick={() => setSidebarOpen(false)}
+                title={item.description}
               >
                 <Icon className="w-5 h-5" />
-                <span>{item.name}</span>
+                <div className="flex-1">
+                  <span>{item.name}</span>
+                  <div className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {item.description}
+                  </div>
+                </div>
               </Link>
             );
           })}
@@ -141,17 +148,21 @@ const Layout = () => {
 
             <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <button className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg">
+              <Link
+                to="/notifications"
+                className="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg"
+              >
                 <Bell className="w-6 h-6" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              </Link>
 
               {/* Settings */}
               <Link
-                to="/profile"
+                to="/children"
                 className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg"
+                title="Manage Children"
               >
-                <Settings className="w-6 h-6" />
+                <Users className="w-6 h-6" />
               </Link>
             </div>
           </div>

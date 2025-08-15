@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
 import { 
   Calendar, 
   Bell, 
@@ -10,7 +11,8 @@ import {
   ChevronRight,
   BookOpen,
   Trophy,
-  Users as UsersIcon
+  Users as UsersIcon,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -26,7 +28,9 @@ const DashboardPage = () => {
       time: '14:00',
       location: 'Room 201',
       school: 'Lincoln Elementary',
-      category: 'academic'
+      category: 'academic',
+      child: 'Emma Johnson',
+      grade: '3'
     },
     {
       id: 2,
@@ -35,7 +39,9 @@ const DashboardPage = () => {
       time: '09:00',
       location: 'School Gym',
       school: 'Lincoln Elementary',
-      category: 'sports'
+      category: 'sports',
+      child: 'Emma Johnson',
+      grade: '3'
     },
     {
       id: 3,
@@ -44,7 +50,20 @@ const DashboardPage = () => {
       time: '19:00',
       location: 'Library',
       school: 'Lincoln Elementary',
-      category: 'pta'
+      category: 'pta',
+      child: 'Alex Johnson',
+      grade: '5'
+    },
+    {
+      id: 4,
+      title: 'Science Fair',
+      date: '2024-01-30',
+      time: '16:00',
+      location: 'Gymnasium',
+      school: 'Lincoln Elementary',
+      category: 'academic',
+      child: 'Alex Johnson',
+      grade: '5'
     }
   ];
 
@@ -61,7 +80,7 @@ const DashboardPage = () => {
       name: 'Alex Johnson',
       grade: '5',
       school: 'Lincoln Elementary',
-      upcomingEvents: 1
+      upcomingEvents: 2
     }
   ];
 
@@ -72,13 +91,6 @@ const DashboardPage = () => {
       icon: Plus,
       href: '/children',
       color: 'bg-blue-500'
-    },
-    {
-      title: 'Create Event',
-      description: 'Schedule a new event',
-      icon: Calendar,
-      href: '/events/create',
-      color: 'bg-green-500'
     },
     {
       title: 'View Calendar',
@@ -116,10 +128,18 @@ const DashboardPage = () => {
     });
   };
 
+  const formatTime = (timeString) => {
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
   return (
     <>
       <Helmet>
-        <title>Dashboard - School Events Hub</title>
+        <title>Home - School Events Hub</title>
       </Helmet>
 
       <div className="space-y-6">
@@ -134,11 +154,15 @@ const DashboardPage = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
-              <div key={index} className="card p-4 hover:shadow-medium transition-shadow cursor-pointer">
+              <Link
+                key={index}
+                to={action.href}
+                className="card p-4 hover:shadow-medium transition-shadow cursor-pointer"
+              >
                 <div className="flex items-center space-x-3">
                   <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center`}>
                     <Icon className="w-5 h-5 text-white" />
@@ -148,56 +172,62 @@ const DashboardPage = () => {
                     <p className="text-sm text-gray-600">{action.description}</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upcoming Events */}
+          {/* Upcoming Events - Primary User Journey */}
           <div className="lg:col-span-2">
             <div className="card">
               <div className="card-header">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900">Upcoming Events</h2>
-                  <a href="/events" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    View All
-                  </a>
+                  <Link to="/calendar" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    View Calendar
+                  </Link>
                 </div>
               </div>
               <div className="card-body">
                 {upcomingEvents.length > 0 ? (
                   <div className="space-y-4">
                     {upcomingEvents.map((event) => (
-                      <div key={event.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex-shrink-0">
-                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Calendar className="w-6 h-6 text-blue-600" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="font-medium text-gray-900 truncate">{event.title}</h3>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(event.category)}`}>
-                              {event.category}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <div className="flex items-center space-x-1">
-                              <Clock className="w-4 h-4" />
-                              <span>{formatDate(event.date)} at {event.time}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{event.location}</span>
+                      <Link
+                        key={event.id}
+                        to={`/events/${event.id}`}
+                        className="block"
+                      >
+                        <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <Calendar className="w-6 h-6 text-blue-600" />
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500 mt-1">{event.school}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-medium text-gray-900 truncate">{event.title}</h3>
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(event.category)}`}>
+                                {event.category}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <div className="flex items-center space-x-1">
+                                <Clock className="w-4 h-4" />
+                                <span>{formatDate(event.date)} at {formatTime(event.time)}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="w-4 h-4" />
+                                <span>{event.location}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                              <p className="text-sm text-gray-500">{event.school} • {event.child} (Grade {event.grade})</p>
+                              <ChevronRight className="w-5 h-5 text-gray-400" />
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-shrink-0">
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
@@ -205,9 +235,9 @@ const DashboardPage = () => {
                     <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No upcoming events</h3>
                     <p className="text-gray-600 mb-4">You're all caught up! Check back later for new events.</p>
-                    <a href="/events" className="btn-primary">
-                      Browse Events
-                    </a>
+                    <Link to="/calendar" className="btn-primary">
+                      View Calendar
+                    </Link>
                   </div>
                 )}
               </div>
@@ -218,10 +248,10 @@ const DashboardPage = () => {
           <div className="card">
             <div className="card-header">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Your Children</h2>
-                <a href="/children" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                <h2 className="text-xl font-semibold text-gray-900">My Children</h2>
+                <Link to="/children" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
                   Manage
-                </a>
+                </Link>
               </div>
             </div>
             <div className="card-body">
@@ -251,16 +281,16 @@ const DashboardPage = () => {
                   <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No children added</h3>
                   <p className="text-gray-600 mb-4">Add your children to start tracking their school events.</p>
-                  <a href="/children" className="btn-primary">
+                  <Link to="/children" className="btn-primary">
                     Add Child
-                  </a>
+                  </Link>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Stats Overview */}
+        {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="card p-6">
             <div className="flex items-center">
@@ -268,8 +298,8 @@ const DashboardPage = () => {
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Events</p>
-                <p className="text-2xl font-semibold text-gray-900">24</p>
+                <p className="text-sm font-medium text-gray-600">This Week</p>
+                <p className="text-2xl font-semibold text-gray-900">{upcomingEvents.length}</p>
               </div>
             </div>
           </div>
@@ -280,8 +310,10 @@ const DashboardPage = () => {
                 <BookOpen className="w-6 h-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Academic Events</p>
-                <p className="text-2xl font-semibold text-gray-900">12</p>
+                <p className="text-sm font-medium text-gray-600">Academic</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {upcomingEvents.filter(e => e.category === 'academic').length}
+                </p>
               </div>
             </div>
           </div>
@@ -292,8 +324,10 @@ const DashboardPage = () => {
                 <Trophy className="w-6 h-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Sports Events</p>
-                <p className="text-2xl font-semibold text-gray-900">8</p>
+                <p className="text-sm font-medium text-gray-600">Sports</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {upcomingEvents.filter(e => e.category === 'sports').length}
+                </p>
               </div>
             </div>
           </div>
@@ -304,7 +338,7 @@ const DashboardPage = () => {
                 <Bell className="w-6 h-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Notifications</p>
+                <p className="text-sm font-medium text-gray-600">Reminders</p>
                 <p className="text-2xl font-semibold text-gray-900">3</p>
               </div>
             </div>
