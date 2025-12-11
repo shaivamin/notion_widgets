@@ -1,0 +1,284 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  EXPORTER
+  BUYER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  FREE
+  MONTHLY
+  YEARLY
+  CREDITS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  PAST_DUE
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  FLAGGED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  password          String?             // Null for OAuth users
+  name              String?
+  role              UserRole            @default(BUYER)
+  emailVerified     Boolean             @default(false)
+  profileImage      String?
+  
+  // OAuth
+  googleId          String?             @unique
+  
+  // Subscription
+  subscriptionPlan   SubscriptionPlan   @default(FREE)
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+  subscriptionId     String?            // Stripe subscription ID
+  customerId         String?            // Stripe customer ID
+  creditsRemaining   Int                @default(0)
+  subscriptionEndsAt DateTime?
+  
+  // Timestamps
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  lastLoginAt       DateTime?
+  
+  // Relations
+  searches          Search[]
+  reports           Report[]
+  subscriptions     Subscription[]
+  payments          Payment[]
+  
+  @@index([email])
+  @@index([googleId])
+  @@index([role])
+}
+
+model Company {
+  id                 String              @id @default(cuid())
+  
+  // Basic Information
+  companyName        String
+  fullAddress        String?
+  country            String
+  city               String?
+  state              String?
+  postalCode         String?
+  
+  // Contact Information
+  contactPerson      String?
+  email              String?
+  phone              String?
+  website            String?
+  
+  // Business Details
+  importedProducts   String[]            // Array of product names
+  exportedProducts   String[]            // Array of product names
+  quantity           Decimal?
+  importValue        Decimal?
+  exportValue        Decimal?
+  currency           String              @default("USD")
+  
+  // Categories and Classification
+  categories         String[]            // Array of category names
+  hsnCodes           String[]            // Array of HSN codes
+  
+  // Supply Chain
+  lastSupplier       String?
+  lastBuyer          String?
+  
+  // Verification
+  verificationStatus VerificationStatus  @default(PENDING)
+  verifiedAt         DateTime?
+  verifiedBy         String?             // Admin ID
+  
+  // Auto-checks
+  websiteVerified    Boolean             @default(false)
+  emailVerified      Boolean             @default(false)
+  phoneVerified      Boolean             @default(false)
+  
+  // Data Provenance
+  dataSource         String              // e.g., "DGFT", "Manual Entry"
+  sourceReference    String?             // Reference ID from source
+  
+  // Metadata
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  
+  // Relations
+  reports            Report[]
+  
+  @@index([country])
+  @@index([verificationStatus])
+  @@index([companyName])
+  @@index([email])
+  @@index([dataSource])
+  @@index([hsnCodes])
+  @@index([categories])
+}
+
+model Search {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Search Parameters
+  query       String?
+  hsnCode     String?
+  category    String?
+  country     String?
+  minValue    Decimal?
+  maxValue    Decimal?
+  verified    Boolean?
+  
+  // Results
+  resultCount Int      @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Report {
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  reason      String
+  description String?
+  status      ReportStatus  @default(PENDING)
+  
+  // Admin Review
+  reviewedBy  String?       // Admin ID
+  reviewedAt  DateTime?
+  resolution  String?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Subscription {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  plan            SubscriptionPlan
+  status          SubscriptionStatus
+  
+  // Stripe
+  stripeSubscriptionId String?        @unique
+  stripeCustomerId     String?
+  stripePriceId        String?
+  
+  // Billing
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean        @default(false)
+  canceledAt           DateTime?
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount          Decimal
+  currency        String   @default("USD")
+  
+  // Stripe
+  stripePaymentId String   @unique
+  stripeStatus    String
+  
+  // Details
+  description     String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model DataIngestionLog {
+  id          String   @id @default(cuid())
+  
+  source      String   // e.g., "DGFT"
+  status      String   // SUCCESS, FAILED, PARTIAL
+  
+  recordsFetched    Int      @default(0)
+  recordsProcessed  Int      @default(0)
+  recordsInserted   Int      @default(0)
+  recordsUpdated    Int      @default(0)
+  recordsFailed     Int      @default(0)
+  duplicatesSkipped Int      @default(0)
+  
+  errorMessage      String?
+  metadata          Json?
+  
+  startedAt   DateTime
+  completedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([source])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  
+  userId      String?
+  action      String   // e.g., "USER_LOGIN", "COMPANY_VERIFIED", "REPORT_CREATED"
+  entityType  String?  // e.g., "User", "Company", "Report"
+  entityId    String?
+  
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
